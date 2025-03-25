@@ -15,7 +15,13 @@ const AuthProvider = ({ children }) => {
     const savedResumes = localStorage.getItem('resumes');
     
     if (user) {
-      setCurrentUser(JSON.parse(user));
+      const parsedUser = JSON.parse(user);
+      // For testing, ensure the user has 100 credits
+      if (parsedUser.credits < 100) {
+        parsedUser.credits = 100;
+        localStorage.setItem('user', JSON.stringify(parsedUser));
+      }
+      setCurrentUser(parsedUser);
     }
     
     if (savedResumes) {
@@ -32,7 +38,7 @@ const AuthProvider = ({ children }) => {
       id: "user" + Date.now(),
       email,
       name: email.split('@')[0],
-      credits: 5,
+      credits: 100, // Starting with 100 credits for testing
       subscription: "Free",
       expiresAt: null
     };
@@ -49,7 +55,7 @@ const AuthProvider = ({ children }) => {
       id: "user" + Date.now(),
       email,
       name: name || email.split('@')[0],
-      credits: 5,
+      credits: 100, // Starting with 100 credits for testing
       subscription: "Free",
       expiresAt: null
     };
@@ -89,6 +95,13 @@ const AuthProvider = ({ children }) => {
     setResumes(updatedResumes);
   };
 
+  // Function to delete a resume
+  const deleteResume = (resumeId) => {
+    const updatedResumes = resumes.filter(resume => resume.id !== resumeId);
+    localStorage.setItem('resumes', JSON.stringify(updatedResumes));
+    setResumes(updatedResumes);
+  };
+
   // Function to get resume by ID
   const getResumeById = (resumeId) => {
     return resumes.find(resume => resume.id === resumeId);
@@ -113,6 +126,7 @@ const AuthProvider = ({ children }) => {
     resumes,
     addResume,
     updateResume,
+    deleteResume,
     getResumeById,
     useCredit
   };
@@ -125,3 +139,4 @@ const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
+

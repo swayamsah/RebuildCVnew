@@ -408,7 +408,7 @@ export default function HomePage() {
       
       {/* CTA Section */}
       <section className="relative py-24 z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 to-purple-900/20 z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-purple-900/20 to- z-0"></div>
         
         {/* Animated background elements */}
         <div className="absolute w-full h-full overflow-hidden">
@@ -451,7 +451,7 @@ export default function HomePage() {
               </div>
             </div>
             
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-white">
               Ready to Land Your Dream Job?
             </h2>
             <p className="text-xl text-gray-300 mb-8">

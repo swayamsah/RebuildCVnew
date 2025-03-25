@@ -9,9 +9,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./components/Auth/LoginPage";
 import SignupPage from "./components/Auth/SignupPage";
 import ResumeBuilder from "./components/Dashboard/ResumeBuilder";
-// import SubscriptionPage from "./components/Dashboard/SubscriptionPage";
-// import SettingsPage from "./components/Dashboard/SettingsPage";
-// import HelpPage from "./components/Dashboard/HelpPage";
+import SubscriptionPage from "./components/Dashboard/SubscriptionPage";
+import SettingsPage from "./components/Dashboard/SettingsPage";
+import HelpPage from "./components/Dashboard/HelpPage";
 import ComparisonView from "./components/Dashboard/ComparisonView";
 
 function App() {
@@ -60,30 +60,30 @@ function App() {
         </ProtectedRoute>
       ),
     },
-    // {
-    //   path: "/dashboard/subscription",
-    //   element: (
-    //     <ProtectedRoute>
-    //       <SubscriptionPage />
-    //     </ProtectedRoute>
-    //   ),
-    // },
-    // {
-    //   path: "/dashboard/settings",
-    //   element: (
-    //     <ProtectedRoute>
-    //       <SettingsPage />
-    //     </ProtectedRoute>
-    //   ),
-    // },
-    // {
-    //   path: "/dashboard/help",
-    //   element: (
-    //     <ProtectedRoute>
-    //       <HelpPage />
-    //     </ProtectedRoute>
-    //   ),
-    // },
+    {
+      path: "/dashboard/subscription",
+      element: (
+        <ProtectedRoute>
+          <SubscriptionPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/dashboard/settings",
+      element: (
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/dashboard/help",
+      element: (
+        <ProtectedRoute>
+          <HelpPage />
+        </ProtectedRoute>
+      ),
+    },
   ]);
 
   return (

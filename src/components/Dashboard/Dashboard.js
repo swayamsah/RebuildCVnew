@@ -7,7 +7,7 @@ import DashboardSidebar from './DashboardSidebar';
 import { FaPlus, FaRegFilePdf, FaRegFileWord, FaEllipsisV, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
 
 const Dashboard = () => {
-  const { currentUser, resumes, addResume } = useAuth();
+  const { currentUser, resumes, addResume, deleteResume } = useAuth();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [jobTitle, setJobTitle] = useState('');
@@ -86,11 +86,21 @@ const Dashboard = () => {
   };
 
   // Toggle dropdown menu for a resume
-  const toggleDropdown = (id) => {
+  const toggleDropdown = (id, e) => {
+    e.stopPropagation();
     if (activeDropdown === id) {
       setActiveDropdown(null);
     } else {
       setActiveDropdown(id);
+    }
+  };
+
+  // Delete a resume
+  const handleDeleteResume = (id, e) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this resume? This action cannot be undone.")) {
+      deleteResume(id);
+      setActiveDropdown(null);
     }
   };
 
@@ -285,7 +295,7 @@ const Dashboard = () => {
           onClick={() => setIsUploadModalOpen(false)}
         >
           <motion.div 
-            className="bg-gray-900 rounded-xl border border-gray-800 p-6 w-full max-w-md"
+            className="bg-gray-900 rounded-xl border border-gray-800 p-6 w-full max-w-lg"
             onClick={(e) => e.stopPropagation()}
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -293,39 +303,49 @@ const Dashboard = () => {
           >
             <h2 className="text-2xl font-bold mb-6">Create New Resume</h2>
             
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center mb-2">
+            <div className="space-y-6">
+              {/* Step 1: Upload Resume */}
+              <div className="bg-gray-800/60 rounded-lg p-5 border border-gray-700">
+                <div className="flex items-center mb-4">
                   <div className="w-8 h-8 rounded-full bg-purple-900/60 flex items-center justify-center text-purple-400 mr-3">
                     1
                   </div>
-                  <label className="block font-medium">Upload your resume</label>
+                  <h3 className="font-medium text-lg">Upload your resume</h3>
                 </div>
+                
                 <div 
-                  className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-700 border-dashed rounded-md cursor-pointer hover:border-gray-600 transition"
+                  className="flex justify-center px-6 pt-6 pb-8 border-2 border-gray-700 border-dashed rounded-lg cursor-pointer hover:border-purple-500/30 transition"
                   onClick={() => fileInputRef.current.click()}
                 >
-                  <div className="space-y-1 text-center">
+                  <div className="text-center">
                     {resumeFile ? (
                       <>
-                        <svg className="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <p className="text-sm text-gray-400">
+                        <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-green-900/30 text-green-400 mb-3">
+                          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-medium text-white mb-1">
                           {resumeFile.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm text-gray-400 mb-3">
+                          Ready to optimize!
+                        </p>
+                        <p className="text-xs text-purple-400 hover:text-purple-300">
                           Click to change file
                         </p>
                       </>
                     ) : (
                       <>
-                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <svg className="mx-auto h-14 w-14 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                           <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H8m36-12h-4m4 0H20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        <p className="text-sm text-gray-400">
-                          <span className="font-medium text-purple-400 hover:text-purple-300">
-                            Upload a file
+                        <p className="text-lg font-medium text-gray-300 mb-1">
+                          Upload your resume
+                        </p>
+                        <p className="text-sm text-gray-400 mb-3">
+                          <span className="text-purple-400 hover:text-purple-300">
+                            Click to browse files
                           </span> or drag and drop
                         </p>
                         <p className="text-xs text-gray-500">
@@ -344,52 +364,56 @@ const Dashboard = () => {
                 />
               </div>
               
-              <div>
-                <div className="flex items-center mb-2">
+              {/* Step 2: Job Details */}
+              <div className="bg-gray-800/60 rounded-lg p-5 border border-gray-700">
+                <div className="flex items-center mb-4">
                   <div className="w-8 h-8 rounded-full bg-purple-900/60 flex items-center justify-center text-purple-400 mr-3">
                     2
                   </div>
-                  <label className="block font-medium">Enter job details</label>
+                  <h3 className="font-medium text-lg">Enter job details</h3>
                 </div>
-                <div className="space-y-3">
+                
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Job Title
+                      Job Title <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                       placeholder="e.g. Software Engineer"
                     />
                   </div>
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Company
+                      Company <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
                       value={jobCompany}
                       onChange={(e) => setJobCompany(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                       placeholder="e.g. Google"
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Job Description
+                      Job Description (optional)
                     </label>
                     <textarea
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none"
                       placeholder="Paste job description here..."
                     ></textarea>
-                    <div className="mt-1 flex items-center text-sm">
-                      <span className="text-gray-400 mr-2">Or</span>
+                    
+                    <div className="mt-2 flex items-center text-sm">
+                      <span className="text-gray-400 mr-2">or</span>
                       <button
                         type="button"
                         onClick={() => jobDescInputRef.current.click()}
@@ -421,7 +445,8 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={handleCreateResume}
-                className="flex-1 py-2 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:shadow-lg hover:shadow-purple-500/20 transition"
+                disabled={!resumeFile || (!jobTitle || !jobCompany)}
+                className="flex-1 py-2 px-4 border border-transparent rounded-md text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:shadow-lg hover:shadow-purple-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue
               </button>

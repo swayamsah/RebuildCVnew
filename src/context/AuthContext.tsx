@@ -1,13 +1,46 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, FC, ReactNode } from 'react';
 
-const AuthContext = createContext(null);
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  credits: number;
+  subscription: string;
+  expiresAt: string | null;
+}
+
+interface Resume {
+  id: string;
+  [key: string]: any;
+}
+
+export interface AuthContextType {
+  currentUser: User | null;
+  loading: boolean;
+  resumes: Resume[];
+  login: (email: string, password: string) => User;
+  signup: (email: string, password: string, name?: string) => User;
+  logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
+  addResume: (resume: Resume) => string;
+  updateResume: (resumeId: string, updatedData: Partial<Resume>) => void;
+  deleteResume: (resumeId: string) => void;
+  getResumeById: (resumeId: string) => Resume | undefined;
+  useCredit: () => boolean;
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => useContext(AuthContext);
 
-const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [resumes, setResumes] = useState([]);
+  const [resumes, setResumes] = useState<Resume[]>([]);
 
   // Check if a user is logged in from localStorage on initial load
   useEffect(() => {
@@ -32,9 +65,9 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function - in a real app, this would make an API call
-  const login = (email, password) => {
+  const login = (email: string, password: string): User => {
     // Mocked login functionality
-    const user = {
+    const user: User = {
       id: "user" + Date.now(),
       email,
       name: email.split('@')[0],
@@ -49,9 +82,9 @@ const AuthProvider = ({ children }) => {
   };
 
   // Signup function - in a real app, this would make an API call
-  const signup = (email, password, name) => {
+  const signup = (email: string, password: string, name?: string): User => {
     // Mocked signup functionality
-    const user = {
+    const user: User = {
       id: "user" + Date.now(),
       email,
       name: name || email.split('@')[0],
@@ -72,14 +105,16 @@ const AuthProvider = ({ children }) => {
   };
 
   // Function to update user data
-  const updateUser = (userData) => {
-    const updatedUser = { ...currentUser, ...userData };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setCurrentUser(updatedUser);
+  const updateUser = (userData: Partial<User>) => {
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setCurrentUser(updatedUser);
+    }
   };
 
   // Function to add a new resume
-  const addResume = (resume) => {
+  const addResume = (resume: Resume): string => {
     const updatedResumes = [...resumes, resume];
     localStorage.setItem('resumes', JSON.stringify(updatedResumes));
     setResumes(updatedResumes);
@@ -87,7 +122,7 @@ const AuthProvider = ({ children }) => {
   };
 
   // Function to update existing resume
-  const updateResume = (resumeId, updatedData) => {
+  const updateResume = (resumeId: string, updatedData: Partial<Resume>) => {
     const updatedResumes = resumes.map(resume => 
       resume.id === resumeId ? { ...resume, ...updatedData } : resume
     );
@@ -96,19 +131,19 @@ const AuthProvider = ({ children }) => {
   };
 
   // Function to delete a resume
-  const deleteResume = (resumeId) => {
+  const deleteResume = (resumeId: string) => {
     const updatedResumes = resumes.filter(resume => resume.id !== resumeId);
     localStorage.setItem('resumes', JSON.stringify(updatedResumes));
     setResumes(updatedResumes);
   };
 
   // Function to get resume by ID
-  const getResumeById = (resumeId) => {
+  const getResumeById = (resumeId: string): Resume | undefined => {
     return resumes.find(resume => resume.id === resumeId);
   };
 
   // Function to use a credit
-  const useCredit = () => {
+  const useCredit = (): boolean => {
     if (currentUser && currentUser.credits > 0) {
       updateUser({ credits: currentUser.credits - 1 });
       return true;
@@ -116,7 +151,7 @@ const AuthProvider = ({ children }) => {
     return false;
   };
 
-  const value = {
+  const value: AuthContextType = {
     currentUser,
     login,
     signup,
@@ -139,4 +174,3 @@ const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
-

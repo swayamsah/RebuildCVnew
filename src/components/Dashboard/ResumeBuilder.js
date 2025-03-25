@@ -16,6 +16,9 @@ const ResumeBuilder = () => {
   const navigate = useNavigate();
   const { getResumeById, updateResume, useCredit, currentUser } = useAuth();
   
+  // Move useCredit hook to component level
+  const hasCredits = useCredit();
+  
   const [resume, setResume] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [optimizedResume, setOptimizedResume] = useState(null);
@@ -84,7 +87,7 @@ const ResumeBuilder = () => {
   
   // Handle resume optimization with error handling
   const handleOptimizeResume = async () => {
-    if (!useCredit()) {
+    if (!hasCredits) {
       navigate('/dashboard/subscription');
       return;
     }
@@ -248,7 +251,7 @@ const ResumeBuilder = () => {
     setIsStartOverModalOpen(false);
     
     // Check if user has enough credits
-    if (!useCredit()) {
+    if (!hasCredits) {
       navigate('/dashboard/subscription');
       return;
     }

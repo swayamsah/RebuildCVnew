@@ -86,7 +86,7 @@ export default function Navigation() {
                   Dashboard
                 </Link>
               ) : (
-                <div className="flex space-x-4">
+                <div className="flex space-x-4 justify-center items-center">
                   <Link
                     to="/login"
                     className="text-white hover:text-cyan-400 transition"

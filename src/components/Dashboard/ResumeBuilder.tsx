@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent, KeyboardEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,11 +21,11 @@ import {
 const ResumeBuilder: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const auth = useAuth();
+  const auth = useAuth() as IAuthContext | null;
   if (!auth) throw new Error("Auth context not found");
   const { getResumeById, updateResume, useCredit, currentUser } = auth;
   
-  const hasCredits = useCredit();
+  const hasCredits = useCredit ? useCredit() : false;
   
   const [resume, setResume] = useState<IResume | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -55,8 +55,8 @@ const ResumeBuilder: React.FC = () => {
   useEffect(() => {
     if (optimizedResume) {
       setEditableContent({
-        summary: optimizedResume.summary,
-        skills: [...optimizedResume.skills]
+        summary: optimizedResume.summary || '',
+        skills: [...(optimizedResume.skills || [])]
       });
     }
   }, [optimizedResume]);
@@ -72,7 +72,7 @@ const ResumeBuilder: React.FC = () => {
           return;
         }
 
-        const resumeData = getResumeById(id);
+        const resumeData = getResumeById ? getResumeById(id) : null;
         if (resumeData) {
           setResume(resumeData);
           
@@ -138,7 +138,7 @@ const ResumeBuilder: React.FC = () => {
       
       setOptimizedResume(optimizedData);
       
-      if (id) {
+      if (id && updateResume) {
         updateResume(id, {
           status: 'optimized',
           optimized: optimizedData
@@ -157,7 +157,7 @@ const ResumeBuilder: React.FC = () => {
   const handleImproveWithPrompt = (prompt: string): void => {
     setIsCustomPromptModalOpen(false);
     
-    if (currentUser.subscription === 'Free') {
+    if (currentUser?.subscription === 'Free') {
       navigate('/dashboard/subscription');
       return;
     }
@@ -165,7 +165,7 @@ const ResumeBuilder: React.FC = () => {
     setIsProcessing(true);
     
     setTimeout(() => {
-      if (optimizedResume && id) {
+      if (optimizedResume && id && updateResume) {
         const updatedData: IOptimizedResume = {
           ...optimizedResume,
           summary: optimizedResume.summary + " " + prompt.substring(0, 50) + "..."
@@ -182,7 +182,7 @@ const ResumeBuilder: React.FC = () => {
   };
   
   const handleParametersChange = (newParams: IParameters): void => {
-    if (currentUser.subscription === 'Free') {
+    if (currentUser?.subscription === 'Free') {
       setIsParametersModalOpen(false);
       navigate('/dashboard/subscription');
       return;
@@ -202,7 +202,7 @@ const ResumeBuilder: React.FC = () => {
     
     setOptimizedResume(undefined);
     
-    if (id) {
+    if (id && updateResume) {
       updateResume(id, {
         status: 'pending',
         optimized: undefined
@@ -211,7 +211,7 @@ const ResumeBuilder: React.FC = () => {
   };
 
   const handleContentUpdate = (): void => {
-    if (!optimizedResume || !id) return;
+    if (!optimizedResume || !id || !updateResume) return;
     
     const updatedResume: IOptimizedResume = {
       ...optimizedResume,
@@ -223,6 +223,27 @@ const ResumeBuilder: React.FC = () => {
     updateResume(id, {
       optimized: updatedResume
     });
+  };
+
+  const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+      setEditableContent({
+        ...editableContent,
+        skills: [...editableContent.skills, e.currentTarget.value.trim()]
+      });
+      e.currentTarget.value = '';
+    }
+  };
+
+  const handleAddSkill = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    const input = e.currentTarget.previousSibling as HTMLInputElement;
+    if (input && input.value && input.value.trim()) {
+      setEditableContent({
+        ...editableContent,
+        skills: [...editableContent.skills, input.value.trim()]
+      });
+      input.value = '';
+    }
   };
 
   if (isLoading) {
@@ -584,27 +605,10 @@ const ResumeBuilder: React.FC = () => {
                               type="text"
                               className="flex-1 p-2 bg-gray-800 border border-gray-700 rounded-l-md text-white"
                               placeholder="Add a skill..."
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                  setEditableContent({
-                                    ...editableContent,
-                                    skills: [...editableContent.skills, e.currentTarget.value.trim()]
-                                  });
-                                  e.currentTarget.value = '';
-                                }
-                              }}
+                              onKeyDown={handleSkillKeyDown}
                             />
                             <button
-                              onClick={(e) => {
-                                const input = e.currentTarget.previousSibling as HTMLInputElement;
-                                if (input.value.trim()) {
-                                  setEditableContent({
-                                    ...editableContent,
-                                    skills: [...editableContent.skills, input.value.trim()]
-                                  });
-                                  input.value = '';
-                                }
-                              }}
+                              onClick={handleAddSkill}
                               className="bg-gray-700 hover:bg-gray-600 text-white px-4 rounded-r-md border border-gray-700"
                             >
                               Add
@@ -632,8 +636,8 @@ const ResumeBuilder: React.FC = () => {
       <AnimatePresence>
         {isTemplateModalOpen && (
           <TemplateSelector 
-            selectedTemplate={selectedTemplate}
-            onSelect={setSelectedTemplate}
+            currentTemplate={selectedTemplate}
+            onSelectTemplate={setSelectedTemplate}
             onClose={() => setIsTemplateModalOpen(false)}
           />
         )}
@@ -644,7 +648,7 @@ const ResumeBuilder: React.FC = () => {
         {isParametersModalOpen && (
           <ParametersModal
             parameters={parameters}
-            onSave={handleParametersChange}
+            onChange={handleParametersChange}
             onClose={() => setIsParametersModalOpen(false)}
           />
         )}

@@ -522,7 +522,7 @@ const HomePage: FC = () => {
       </section>
       
       <div id="pricing">
-        <Pricing />
+        <Pricing handleonchange={() => {}} />
       </div>
       <Howitwork />
       <Testimonials />

@@ -1,24 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import DashboardNavigation from './DashboardNavigation';
 import DashboardSidebar from './DashboardSidebar';
 
-const SettingsPage = () => {
-  const { currentUser, updateUser, logout } = useAuth();
-  const [formData, setFormData] = useState({
-    name: currentUser.name || '',
-    email: currentUser.email || '',
+interface FormData {
+  name: string;
+  email: string;
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+interface NotificationSetting {
+  id: string;
+  label: string;
+}
+
+const SettingsPage: React.FC = () => {
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
-  const [isEditing, setIsEditing] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const auth = useAuth();
+  
+  if (!auth) {
+    return <div>Authentication context not available</div>;
+  }
+
+  const { currentUser, updateUser, logout } = auth;
+
+  if (!currentUser) {
+    return <div>Please log in to view settings</div>;
+  }
+
+  // Update form data with user info if needed
+  React.useEffect(() => {
+    setFormData(prevData => ({
+      ...prevData,
+      name: currentUser.name || '',
+      email: currentUser.email || ''
+    }));
+  }, [currentUser]);
 
   // Handle form input changes
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -26,7 +58,7 @@ const SettingsPage = () => {
   };
 
   // Handle profile update
-  const handleProfileUpdate = (e) => {
+  const handleProfileUpdate = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     
     // Reset messages
@@ -49,7 +81,7 @@ const SettingsPage = () => {
   };
 
   // Handle password update
-  const handlePasswordUpdate = (e) => {
+  const handlePasswordUpdate = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     
     // Reset messages
@@ -82,11 +114,17 @@ const SettingsPage = () => {
   };
   
   // Handle account deletion
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = (): void => {
     // In a real app, this would make an API call to delete the user's account
     // For this demo, we'll just log out the user
     logout();
   };
+
+  const notificationSettings: NotificationSetting[] = [
+    { id: 'email_updates', label: 'Email Updates' },
+    { id: 'product_news', label: 'Product News and Announcements' },
+    { id: 'marketing', label: 'Marketing Communications' }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -259,11 +297,7 @@ const SettingsPage = () => {
               
               <div className="p-6">
                 <div className="space-y-4">
-                  {[
-                    { id: 'email_updates', label: 'Email Updates' },
-                    { id: 'product_news', label: 'Product News and Announcements' },
-                    { id: 'marketing', label: 'Marketing Communications' }
-                  ].map((item) => (
+                  {notificationSettings.map((item) => (
                     <div key={item.id} className="flex items-center justify-between">
                       <label htmlFor={item.id} className="font-medium">{item.label}</label>
                       <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full">
@@ -272,7 +306,7 @@ const SettingsPage = () => {
                           id={item.id}
                           name={item.id}
                           className="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white rounded-full appearance-none cursor-pointer peer border border-gray-300 checked:border-purple-500 checked:bg-purple-500 checked:translate-x-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                          defaultChecked={item.id === 'email_updates' ? true : false}
+                          defaultChecked={item.id === 'email_updates'}
                         />
                         <span className="absolute inset-0 transition duration-200 ease-in-out bg-gray-700 rounded-full peer-checked:bg-purple-600"></span>
                       </div>

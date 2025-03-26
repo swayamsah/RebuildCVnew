@@ -2,18 +2,48 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, AuthContextType } from '../../context/AuthContext';
 import DashboardNavigation from './DashboardNavigation';
 import DashboardSidebar from './DashboardSidebar';
 
-const SubscriptionPage = () => {
-  const { currentUser, updateUser } = useAuth();
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+interface Plan {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  credits: number;
+  features: string[];
+  limitations?: string[];
+  cta: string;
+  disabled?: boolean;
+  popular?: boolean;
+}
+
+interface FAQ {
+  question: string;
+  answer: string;
+}
+
+const SubscriptionPage: React.FC = () => {
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const navigate = useNavigate();
+  const auth = useAuth();
+  
+  if (!auth) {
+    // Handle the case where auth context is not available
+    return <div>Authentication context not available</div>;
+  }
+  
+  const { currentUser, updateUser } = auth;
+
+  if (!currentUser) {
+    // Handle the case where user is not logged in
+    return <div>Please log in to view subscription details</div>;
+  }
   
   // Define subscription plans
-  const plans = [
+  const plans: Plan[] = [
     {
       id: 'free',
       name: 'Free',
@@ -70,18 +100,18 @@ const SubscriptionPage = () => {
   ];
   
   // Open upgrade confirmation modal
-  const handleUpgradeClick = (plan) => {
+  const handleUpgradeClick = (plan: Plan): void => {
     setSelectedPlan(plan);
     setIsUpgradeModalOpen(true);
   };
   
   // Handle upgrade confirmation
-  const handleConfirmUpgrade = () => {
+  const handleConfirmUpgrade = (): void => {
     // For testing purposes, we're just updating the user object
     // In a real app, this would make an API call to process payment
     updateUser({
-      subscription: selectedPlan.name,
-      credits: selectedPlan.credits,
+      subscription: selectedPlan!.name,
+      credits: selectedPlan!.credits,
       // Set expiration date to 30 days from now
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     });
@@ -94,6 +124,25 @@ const SubscriptionPage = () => {
       navigate('/dashboard');
     }, 1000);
   };
+
+  const faqs: FAQ[] = [
+    {
+      question: "How many credits do I need per resume?",
+      answer: "Each resume optimization uses 1 credit. This includes the initial optimization and any further improvements you make with custom prompts."
+    },
+    {
+      question: "Can I cancel my subscription anytime?",
+      answer: "Yes, you can cancel your subscription at any time. You'll continue to have access to your plan until the end of your billing period."
+    },
+    {
+      question: "Do unused credits expire?",
+      answer: "Credits remain valid as long as your subscription is active. If you downgrade or cancel, you'll have 30 days to use any remaining credits."
+    },
+    {
+      question: "Can I upgrade my plan later?",
+      answer: "Yes, you can upgrade your plan at any time. Your new benefits will be available immediately, and we'll prorate the cost based on your current billing cycle."
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -124,7 +173,7 @@ const SubscriptionPage = () => {
                   <div className="bg-gray-800/60 p-4 rounded-lg border border-gray-700">
                     <div className="text-gray-400 text-sm mb-1">Expires On</div>
                     <div className="text-xl font-bold">
-                      {new Date(currentUser.expiresAt).toLocaleDateString()}
+                      {currentUser.expiresAt ? new Date(currentUser.expiresAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 )}
@@ -135,7 +184,7 @@ const SubscriptionPage = () => {
                     Upgrade your plan for more resume optimizations.
                   </div>
                   <button
-                    onClick={() => window.scrollTo({ top: document.getElementById('plans').offsetTop - 100, behavior: 'smooth' })}
+                    onClick={() => window.scrollTo({ top: document.getElementById('plans')?.offsetTop! - 100, behavior: 'smooth' })}
                     className="text-sm bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded transition"
                   >
                     View Plans
@@ -238,24 +287,7 @@ const SubscriptionPage = () => {
               
               <div className="p-6">
                 <div className="space-y-4">
-                  {[
-                    {
-                      question: "How many credits do I need per resume?",
-                      answer: "Each resume optimization uses 1 credit. This includes the initial optimization and any further improvements you make with custom prompts."
-                    },
-                    {
-                      question: "Can I cancel my subscription anytime?",
-                      answer: "Yes, you can cancel your subscription at any time. You'll continue to have access to your plan until the end of your billing period."
-                    },
-                    {
-                      question: "Do unused credits expire?",
-                      answer: "Credits remain valid as long as your subscription is active. If you downgrade or cancel, you'll have 30 days to use any remaining credits."
-                    },
-                    {
-                      question: "Can I upgrade my plan later?",
-                      answer: "Yes, you can upgrade your plan at any time. Your new benefits will be available immediately, and we'll prorate the cost based on your current billing cycle."
-                    }
-                  ].map((faq, index) => (
+                  {faqs.map((faq, index) => (
                     <div key={index} className="bg-gray-800/40 border border-gray-700 rounded-lg p-4">
                       <h4 className="font-medium mb-2">{faq.question}</h4>
                       <p className="text-gray-400 text-sm">{faq.answer}</p>
@@ -276,7 +308,7 @@ const SubscriptionPage = () => {
         >
           <motion.div 
             className="bg-gray-900 rounded-xl border border-gray-800 p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             transition={{ type: "spring", bounce: 0.4 }}

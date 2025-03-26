@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent, KeyboardEvent } from 'react';
+import React, { useState, useEffect, KeyboardEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,19 +14,14 @@ import {
   IResume, 
   IOptimizedResume, 
   IParameters, 
-  IEditableContent,
-  IAuthContext
+  IEditableContent
 } from '../../types';
 
 const ResumeBuilder: React.FC = () => {
+  // All hooks must be called unconditionally at the top level
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const auth = useAuth() as IAuthContext | null;
-  if (!auth) throw new Error("Auth context not found");
-  const { getResumeById, updateResume, useCredit, currentUser } = auth;
-  
-  const hasCredits = useCredit ? useCredit() : false;
-  
+  const auth = useAuth();
   const [resume, setResume] = useState<IResume | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [optimizedResume, setOptimizedResume] = useState<IOptimizedResume | undefined>(undefined);
@@ -42,16 +37,36 @@ const ResumeBuilder: React.FC = () => {
     experienceHighlight: 5,
     skillsEmphasis: 5
   });
-  
   const [editableContent, setEditableContent] = useState<IEditableContent>({
     summary: '',
     skills: []
   });
-  
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // All hooks must be called at the top level
+  const [hasCredits, setHasCredits] = useState(false);
   
+  // Handle custom hook and auth context
+  useEffect(() => {
+    if (auth?.useCredit) {
+      // Call useCredit only when it exists
+      try {
+        const hasAvailableCredits = auth.useCredit();
+        setHasCredits(!!hasAvailableCredits);
+      } catch (err) {
+        console.error('Error checking credits:', err);
+        setHasCredits(false);
+      }
+    } else {
+      setHasCredits(false);
+    }
+  }, [auth]);
+
+  // Auth-related destructuring (after all hooks)
+  const { getResumeById, updateResume, currentUser } = auth || {};
+
   useEffect(() => {
     if (optimizedResume) {
       setEditableContent({
@@ -60,9 +75,11 @@ const ResumeBuilder: React.FC = () => {
       });
     }
   }, [optimizedResume]);
-  
+
   useEffect(() => {
     const loadResume = async (): Promise<void> => {
+      if (!auth || !getResumeById) return;
+
       try {
         setIsLoading(true);
         setError(null);
@@ -72,9 +89,9 @@ const ResumeBuilder: React.FC = () => {
           return;
         }
 
-        const resumeData = getResumeById ? getResumeById(id) : null;
+        const resumeData = getResumeById(id);
         if (resumeData) {
-          setResume(resumeData);
+          setResume(resumeData as unknown as IResume);
           
           if (resumeData.optimized) {
             setOptimizedResume(resumeData.optimized);
@@ -91,7 +108,22 @@ const ResumeBuilder: React.FC = () => {
     };
     
     loadResume();
-  }, [id, getResumeById, navigate]);
+  }, [id, auth, getResumeById, navigate]);
+
+  // Early return for missing auth context
+  if (!auth) {
+    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-red-500 mb-4">Authentication context not available</div>
+        <Link
+          to="/login"
+          className="inline-block px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
+        >
+          Return to Login
+        </Link>
+      </div>
+    </div>;
+  }
 
   const handleOptimizeResume = async (): Promise<void> => {
     if (!hasCredits) {
@@ -486,7 +518,7 @@ const ResumeBuilder: React.FC = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
                             </svg>
                             Customize Optimization Parameters
-                            {currentUser.subscription === 'Free' && (
+                            {currentUser?.subscription === 'Free' && (
                               <span className="ml-2 text-xs bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded-full">Pro</span>
                             )}
                           </button>
@@ -513,7 +545,7 @@ const ResumeBuilder: React.FC = () => {
                           </button>
                           
                           <div className="text-center text-sm text-gray-400 mt-2">
-                            This will use 1 credit. You have {currentUser.credits} credits remaining.
+                            This will use 1 credit. You have {currentUser?.credits || 0} credits remaining.
                           </div>
                         </div>
                       </div>
@@ -534,8 +566,8 @@ const ResumeBuilder: React.FC = () => {
                         onClick={() => setIsParametersModalOpen(true)} 
                         className="text-sm text-purple-400 hover:text-purple-300 flex items-center"
                       >
-                        <FaRedo className="mr-1" /> Adjust Parameters
-                        {currentUser.subscription === 'Free' && (
+        <FaRedo className="mr-1" /> Adjust Parameters
+        {currentUser?.subscription === 'Free' && (
                           <span className="ml-2 text-xs bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded-full">Pro</span>
                         )}
                       </button>
@@ -660,7 +692,7 @@ const ResumeBuilder: React.FC = () => {
           <CustomPromptModal
             onSubmit={handleImproveWithPrompt}
             onClose={() => setIsCustomPromptModalOpen(false)}
-            isPro={currentUser.subscription !== 'Free'}
+            isPro={currentUser?.subscription !== 'Free'}
           />
         )}
       </AnimatePresence>

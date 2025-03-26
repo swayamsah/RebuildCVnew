@@ -2,19 +2,15 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, Settings, User, Bell, Menu } from 'lucide-react';
-import { IAuthContext } from '../../types';
-
-interface User {
-  name?: string;
-}
+import { AuthContextType } from '../../context/AuthContext';
 
 const DashboardNavigation: React.FC = () => {
-  const { currentUser, logout } = useAuth() as IAuthContext;
+  const { currentUser, logout } = useAuth() as AuthContextType;
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   
   // Add fallback values for user data
-  const userName = (currentUser as User)?.name || 'User';
+  const userName = currentUser?.name || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
   
   return (

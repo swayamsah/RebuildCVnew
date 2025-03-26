@@ -54,8 +54,11 @@ export interface IEditableContent {
 
 export interface IAuthContext {
   currentUser: IUser;
+  resumes: IResume[];
   getResumeById: (id: string) => IResume | null;
   updateResume: (id: string, data: Partial<IResume>) => void;
+  addResume: (resume: IResume) => void;
+  deleteResume: (id: string) => void;
   useCredit: () => boolean;
   logout: () => void;
 }

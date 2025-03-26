@@ -5,21 +5,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import DashboardNavigation from './DashboardNavigation';
 import DashboardSidebar from './DashboardSidebar';
 import { FaPlus, FaRegFilePdf, FaRegFileWord, FaEllipsisV, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
-import { IResume, IUser } from '../../types';
+import { IResume, IUser, IAuthContext } from '../../types';
+import { AuthContextType } from '../../context/AuthContext';
 
 interface ResumeFile extends File {
   name: string;
 }
 
-interface AuthContextExtended {
-  currentUser: IUser;
-  resumes: IResume[];
-  addResume: (resume: IResume) => void;
-  deleteResume: (id: string) => void;
-}
-
 const Dashboard: React.FC = () => {
-  const auth = useAuth() as AuthContextExtended;
+  const auth = useAuth() as AuthContextType;
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [resumeFile, setResumeFile] = useState<ResumeFile | null>(null);
   const [jobTitle, setJobTitle] = useState<string>('');
@@ -133,15 +127,15 @@ const Dashboard: React.FC = () => {
             {/* Header section with user info and credits */}
             <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center">
               <div>
-                <h2 className="text-2xl font-bold">Welcome, {auth.currentUser.name || 'User'}!</h2>
+                <h2 className="text-2xl font-bold">Welcome, {auth.currentUser?.name || 'User'}!</h2>
                 <p className="text-gray-400">Let's optimize your resume for your dream job.</p>
               </div>
               <div className="flex items-center space-x-4 mt-4 md:mt-0">
                 <div className="bg-gray-800 px-3 py-1 rounded-full text-sm">
-                  {auth.currentUser.subscription} Plan
+                  {auth.currentUser?.subscription || 'Free'} Plan
                 </div>
                 <div className="bg-purple-900/50 px-3 py-1 rounded-full text-sm border border-purple-500/30">
-                  {auth.currentUser.credits} Credits
+                  {auth.currentUser?.credits || 0} Credits
                 </div>
               </div>
             </div>

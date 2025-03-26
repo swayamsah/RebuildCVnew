@@ -1,31 +1,25 @@
 import React, { createContext, useState, useContext, useEffect, FC, ReactNode } from 'react';
 
-interface User {
+import { IUser, IResume } from '../types';
+
+interface ExtendedUser extends IUser {
   id: string;
   email: string;
-  name: string;
-  credits: number;
-  subscription: string;
   expiresAt: string | null;
 }
 
-interface Resume {
-  id: string;
-  [key: string]: any;
-}
-
 export interface AuthContextType {
-  currentUser: User | null;
+  currentUser: ExtendedUser | null;
   loading: boolean;
-  resumes: Resume[];
-  login: (email: string, password: string) => User;
-  signup: (email: string, password: string, name?: string) => User;
+  resumes: IResume[];
+  login: (email: string, password: string) => ExtendedUser;
+  signup: (email: string, password: string, name?: string) => ExtendedUser;
   logout: () => void;
-  updateUser: (userData: Partial<User>) => void;
-  addResume: (resume: Resume) => string;
-  updateResume: (resumeId: string, updatedData: Partial<Resume>) => void;
+  updateUser: (userData: Partial<ExtendedUser>) => void;
+  addResume: (resume: IResume) => string;
+  updateResume: (resumeId: string, updatedData: Partial<IResume>) => void;
   deleteResume: (resumeId: string) => void;
-  getResumeById: (resumeId: string) => Resume | undefined;
+  getResumeById: (resumeId: string) => IResume | undefined;
   useCredit: () => boolean;
 }
 
@@ -38,9 +32,9 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const useAuth = () => useContext(AuthContext);
 
 const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<ExtendedUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [resumes, setResumes] = useState<IResume[]>([]);
 
   // Check if a user is logged in from localStorage on initial load
   useEffect(() => {
@@ -65,9 +59,9 @@ const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Login function - in a real app, this would make an API call
-  const login = (email: string, password: string): User => {
+  const login = (email: string, password: string): ExtendedUser => {
     // Mocked login functionality
-    const user: User = {
+    const user: ExtendedUser = {
       id: "user" + Date.now(),
       email,
       name: email.split('@')[0],
@@ -82,9 +76,9 @@ const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Signup function - in a real app, this would make an API call
-  const signup = (email: string, password: string, name?: string): User => {
+  const signup = (email: string, password: string, name?: string): ExtendedUser => {
     // Mocked signup functionality
-    const user: User = {
+    const user: ExtendedUser = {
       id: "user" + Date.now(),
       email,
       name: name || email.split('@')[0],
@@ -105,7 +99,7 @@ const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Function to update user data
-  const updateUser = (userData: Partial<User>) => {
+  const updateUser = (userData: Partial<ExtendedUser>) => {
     if (currentUser) {
       const updatedUser = { ...currentUser, ...userData };
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -114,15 +108,19 @@ const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Function to add a new resume
-  const addResume = (resume: Resume): string => {
-    const updatedResumes = [...resumes, resume];
+  const addResume = (resume: IResume): string => {
+    const resumeWithId = {
+      ...resume,
+      id: resume.id || `resume-${Date.now()}`
+    };
+    const updatedResumes = [...resumes, resumeWithId];
     localStorage.setItem('resumes', JSON.stringify(updatedResumes));
     setResumes(updatedResumes);
-    return resume.id;
+    return resumeWithId.id;
   };
 
   // Function to update existing resume
-  const updateResume = (resumeId: string, updatedData: Partial<Resume>) => {
+  const updateResume = (resumeId: string, updatedData: Partial<IResume>) => {
     const updatedResumes = resumes.map(resume => 
       resume.id === resumeId ? { ...resume, ...updatedData } : resume
     );
@@ -138,7 +136,7 @@ const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Function to get resume by ID
-  const getResumeById = (resumeId: string): Resume | undefined => {
+  const getResumeById = (resumeId: string): IResume | undefined => {
     return resumes.find(resume => resume.id === resumeId);
   };
 

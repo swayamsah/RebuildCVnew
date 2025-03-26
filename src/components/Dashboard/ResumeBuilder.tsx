@@ -41,7 +41,7 @@ const ResumeBuilder: React.FC = () => {
     summary: '',
     skills: []
   });
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isDownloading] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
